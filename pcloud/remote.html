@@ -53,23 +53,26 @@
 					v => !!v || 'Url 不能为空',
 					v => checkUrl(v) || 'Url 不正确'
 				],
-				filelist: [],
+				filelist: null,
 				timer: 0
 			}),
+			beforeCreate: function() {
+				let oThis = this;
+				setTimeout(function() {
+					if (window.pcloudRemote) {
+						window.pcloudRemote.syncLocal();
+						oThis.filelist = window.pcloudRemote.filelist;
+						if (oThis.filelist.length > 0) {
+							oThis.fetchuploadStatus();
+						}
+					}
+				}, 100)
+			},
 			template: document.querySelector('#remote-uploader'),
 			methods: {
 				submit() {
 					if (this.$refs.form.validate()) {
-						let d = {
-							url: this.url,
-							filename: this.filename,
-							link: "",
-							status: "waiting",
-							downloaded: 0,
-							size: 0
-						};
-						this.filelist.push(d);
-						this.remoteupload(d.url, d.filename);
+						this.remoteupload(this.url, this.filename);
 						this.$refs.form.reset();
 					}
 				},
@@ -79,26 +82,16 @@
 				remoteupload(url, filename) {
 					if (window.pcloudRemote) {
 						window.pcloudRemote.remoteupload(url, filename);
-						if (this.timer == 0) {
-							this.timer = setInterval(this.updateProgress, 1000);
-							setInterval(function() {
-								if (window.pcloudRemote) {
-									window.pcloudRemote.fetchuploadStatus();
-								}
-							}, 3000);
-						}
+						this.fetchuploadStatus();
 					}
 				},
-				updateProgress() {
-					for (let i in this.filelist) {
-						let url = this.filelist[i].url
-						if (window.pcloudRemote.filelist[url]) {
-							this.filelist[i].link = window.pcloudRemote.filelist[url].link;
-							this.filelist[i].status = window.pcloudRemote.filelist[url].status;
-							this.filelist[i].filename = window.pcloudRemote.filelist[url].filename;
-							this.filelist[i].downloaded = window.pcloudRemote.filelist[url].downloaded;
-							this.filelist[i].size = window.pcloudRemote.filelist[url].size;
-						}
+				fetchuploadStatus() {
+					if (this.timer == 0) {
+						this.timer = setInterval(function() {
+							if (window.pcloudRemote) {
+								window.pcloudRemote.fetchuploadStatus();
+							}
+						}, 3000);
 					}
 				},
 				getlink(fdata) {
@@ -160,6 +153,9 @@
 			},
 			filters: {
 				formatSize(size) {
+					if(size == null || size == undefined){
+						return "";
+					}
 					let t = size / 1024;
 					if (t < 1024) {
 						return t.toFixed(1) + "KB";
