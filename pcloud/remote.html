@@ -1,29 +1,183 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>iview example</title>
-    <link rel="stylesheet" type="text/css" href="http://unpkg.com/iview/dist/styles/iview.css">
-    <script type="text/javascript" src="http://vuejs.org/js/vue.min.js"></script>
-    <script type="text/javascript" src="http://unpkg.com/iview/dist/iview.min.js"></script>
-</head>
-<body>
-<div id="app">
-    <i-button @click="show">Click me!</i-button>
-    <Modal v-model="visible" title="Welcome">Welcome to iView</Modal>
-</div>
-<script>
-    new Vue({
-        el: '#app',
-        data: {
-            visible: false
-        },
-        methods: {
-            show: function () {
-                this.visible = true;
-            }
-        }
-    })
-  </script>
-</body>
+	<head>
+		<link rel="stylesheet" href="https://fonts.loli.net/css?family=Roboto:100,300,400,500,700,900">
+		<link rel="stylesheet" href="https://fonts.loli.net/css?family=Material+Icons">
+		<link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0">
+		<title>pcloud远程上传</title>
+	</head>
+	<body>
+		<div id="app">
+			<v-app>
+				<v-content>
+					<v-container>
+						<remote-uploader></remote-uploader>
+					</v-container>
+				</v-content>
+			</v-app>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+	</body>
+
+	<template id="remote-uploader">
+		<v-form ref="form" lazy-validation>
+			<v-text-field v-model="url" label="Url" data-vv-name="url" :rules="urlRules" required></v-text-field>
+			<v-text-field v-model="filename" label="文件名" data-vv-name="filename"></v-text-field>
+			<v-btn @click="submit" color="success">submit</v-btn>
+			<v-btn @click="clear" color="error">clear</v-btn>
+			<file-list :items="filelist" @file-getlink="getlink"></file-list>
+		</v-form>
+	</template>
+
+	<script>
+		function checkUrl(url) {
+			if (url != "") {
+				var reg = /(http|ftp|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/;
+				if (!reg.test(url)) {
+					return false;
+				}
+				return true;
+			}
+		}
+
+		Vue.component('remote-uploader', {
+			data: () => ({
+				url: '',
+				filename: '',
+				urlRules: [
+					v => !!v || 'Url 不能为空',
+					v => checkUrl(v) || 'Url 不正确'
+				],
+				filelist: [],
+				timer: 0
+			}),
+			template: document.querySelector('#remote-uploader'),
+			methods: {
+				submit() {
+					if (this.$refs.form.validate()) {
+						let d = {
+							url: this.url,
+							filename: this.filename,
+							link: "",
+							status: "waiting",
+							downloaded: 0,
+							size: 0
+						};
+						this.filelist.push(d);
+						this.remoteupload(d.url, d.filename);
+						this.$refs.form.reset();
+					}
+				},
+				clear() {
+					this.$refs.form.reset();
+				},
+				remoteupload(url, filename) {
+					if (window.pcloudRemote) {
+						window.pcloudRemote.remoteupload(url, filename);
+						if (this.timer == 0) {
+							this.timer = setInterval(this.updateProgress, 1000);
+							setInterval(function() {
+								if (window.pcloudRemote) {
+									window.pcloudRemote.fetchuploadStatus();
+								}
+							}, 3000);
+						}
+					}
+				},
+				updateProgress() {
+					for (let i in this.filelist) {
+						let url = this.filelist[i].url
+						if (window.pcloudRemote.filelist[url]) {
+							this.filelist[i].link = window.pcloudRemote.filelist[url].link;
+							this.filelist[i].status = window.pcloudRemote.filelist[url].status;
+							this.filelist[i].filename = window.pcloudRemote.filelist[url].filename;
+							this.filelist[i].downloaded = window.pcloudRemote.filelist[url].downloaded;
+							this.filelist[i].size = window.pcloudRemote.filelist[url].size;
+						}
+					}
+				},
+				getlink(fdata) {
+					if (window.pcloudRemote) {
+						window.pcloudRemote.getfilelinkByUrl(fdata.url, function(f) {
+							fdata.link = f.link;
+						});
+					}
+				},
+			}
+		});
+	</script>
+
+	<template id="file-list">
+		<v-layout row>
+			<v-flex xs12 sm6 offset-sm3>
+				<v-card>
+					<v-toolbar color="cyan" dark>
+						<v-toolbar-title>上传列表</v-toolbar-title>
+					</v-toolbar>
+
+					<v-list three-line>
+						<template v-for="(item, index) in items">
+							<v-list-tile :key="item.title" avatar>
+								<v-list-tile-avatar>
+									<v-icon large color="green darken-2">play_circle_filled</v-icon>
+								</v-list-tile-avatar>
+								<v-list-tile-content>
+									<v-list-tile-title v-html="item.url"></v-list-tile-title>
+									<v-list-tile-sub-title>
+										<span v-if="item.status != 'ready'">【{{item.filename}}】{{item.downloaded | formatSize }}/{{item.size | formatSize}}</span>
+										<span v-if="item.status == 'ready' && item.link == ''">【{{item.filename}}】{{item.size | formatSize}}
+											<v-icon @click="getfilelink(item)">save_alt</v-icon>
+										</span>
+										<span v-else-if="item.link != ''">【{{item.filename}}】{{item.size | formatSize}}
+											<a :href="item.link">
+												<v-icon>link</v-icon>
+											</a>
+										</span>
+									</v-list-tile-sub-title>
+								</v-list-tile-content>
+							</v-list-tile>
+							<v-divider v-if="index < items.length - 1"></v-divider>
+						</template>
+					</v-list>
+				</v-card>
+			</v-flex>
+		</v-layout>
+	</template>
+
+	<script>
+		Vue.component('file-list', {
+			props: ['items'],
+			template: document.querySelector('#file-list'),
+			methods: {
+				getfilelink(fdata) {
+					this.$emit('file-getlink', fdata);
+				}
+			},
+			filters: {
+				formatSize(size) {
+					let t = size / 1024;
+					if (t < 1024) {
+						return t.toFixed(1) + "KB";
+					}
+					t = t / 1024;
+					if (t < 1024) {
+						return t.toFixed(1) + "MB";
+					}
+					t = t / 1024;
+					return t.toFixed(1) + "GB";
+				}
+			}
+		});
+	</script>
+
+	<script>
+		new Vue({
+			el: '#app'
+		});
+	</script>
 </html>
