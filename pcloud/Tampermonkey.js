@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pcloud remote
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  pcloud remote upload files!
 // @author       You
 // @include      http://localhost/remote.html
@@ -40,8 +40,8 @@ Date.prototype.Format = function(fmt) { //author: meizz
     return fmt;
 }
 
-var pcloud_username = 'eurfiv85614@chacuo.net';
-var pcloud_password = 'zaq1qazqaz';
+//var pcloud_username = 'eurfiv85614@chacuo.net';
+//var pcloud_password = 'zaq1qazqaz';
 var pcloud_Origin = 'https://www.pcloud.com';
 var pcloud_Referer = 'https://www.pcloud.com/';
 var useragent =
