@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pcloud remote
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  pcloud remote upload files!
 // @author       You
 // @include      http://localhost/remote.html
@@ -11,6 +11,8 @@
 // @grant        GM_xmlhttpRequest
 // @connect      pcloud.com
 // @run-at       document-start
+// @updateURL    https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js
+// @downloadURL  https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js
 
 // ==/UserScript==
 
