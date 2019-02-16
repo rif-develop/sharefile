@@ -11,8 +11,8 @@
 // @grant        GM_xmlhttpRequest
 // @connect      pcloud.com
 // @run-at       document-start
-// @updateURL    https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js
-// @downloadURL  https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js
+// @updateURL    https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js?1
+// @downloadURL  https://raw.githubusercontent.com/yujie03/sharefile/master/pcloud/Tampermonkey.js?2
 
 // ==/UserScript==
 
@@ -40,8 +40,8 @@ Date.prototype.Format = function(fmt) { //author: meizz
     return fmt;
 }
 
-//var pcloud_username = 'eurfiv85614@chacuo.net';
-//var pcloud_password = 'zaq1qazqaz';
+var pcloud_username = 'eurfiv85614@chacuo.net';
+var pcloud_password = 'zaq1qazqaz';
 var pcloud_Origin = 'https://www.pcloud.com';
 var pcloud_Referer = 'https://www.pcloud.com/';
 var useragent =
