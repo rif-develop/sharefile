@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pcloud remote
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  pcloud remote upload files!
 // @author       You
 // @include      http://localhost/remote.html
@@ -145,8 +145,7 @@ function createFolder(cb) {
 }
 
 function listFolder(folderid, cb) {
-	console.log('listFolder');
-	console.log('folderid', folderid);
+	console.log('listFolder folderid:', folderid);
 	var data = {
 		folderid: folderid,
 		recursive: 0,
@@ -176,6 +175,7 @@ function listFolder(folderid, cb) {
 }
 
 function downloadfile(url, filename, cb) {
+	console.log('downloadfile url:', url);
 	var rd1 = Math.ceil(Math.random() * 80000000 + 10000000);
 	var rd2 = Math.ceil(Math.random() * 899 + 100);
 	var progresshash = 'upload-' + rd1 + '-xhr-' + rd2;
@@ -205,12 +205,11 @@ function downloadfile(url, filename, cb) {
 		url: 'https://api8.pcloud.com/downloadfile',
 		headers: pcloud_post_headers,
 		data: data,
-		onload: response => {
-
-			if (response.readyState == 4) {
+		onload: response => {			
+			if (response.readyState == 4) {				
 				var json_data = JSON.parse(response.responseText);
+				console.log('downloadfile complete:', url, json_data);
 				if (json_data.result == 0) {
-
 					f.fileid = json_data.metadata[0].fileid;
 					f.status = "ready";
 					f.hash = json_data.metadata[0].hash;
@@ -222,10 +221,11 @@ function downloadfile(url, filename, cb) {
 					} else {
 						cb && cb(fileid);
 					}
-				} else
-					cb && cb(-1);
+				} else{
+					console.warn('downloadfile failed:', url, json_data);
+				}					
 			} else {
-				cb && cb(-2);
+				console.warn('downloadfile failed readyState:', url, response.readyState);
 			}
 
 		}
@@ -235,13 +235,13 @@ function downloadfile(url, filename, cb) {
 function fetchuploadStatus(cb) {
 	for (let i in files) {
 		if ((files[i].status == "waiting" || files[i].status == "downloading") && files[i].fileid == 0) {
-
 			uploadprogress(files[i], cb);
 		}
 	}
 }
 
 function uploadprogress(f, cb) {
+	console.log('uploadprogress url:', f.url);
 	let data = {
 		progresshash: f.progresshash,
 		auth: auth
@@ -252,7 +252,6 @@ function uploadprogress(f, cb) {
 		url: 'https://api8.pcloud.com/uploadprogress?' + data,
 		headers: pcloud_get_headers,
 		onload: response => {
-
 			if (response.readyState == 4) {
 				var json_data = JSON.parse(response.responseText);
 				if (json_data.result == 0) {
@@ -279,6 +278,7 @@ function uploadprogress(f, cb) {
 }
 
 function renamefile(f, cb) {
+	console.log('renamefile url:', f.url, f.filename);
 	var data = {
 		fileid: f.fileid,
 		toname: f.filename,
@@ -291,7 +291,6 @@ function renamefile(f, cb) {
 		url: 'https://api.pcloud.com/renamefile?' + data,
 		headers: pcloud_get_headers,
 		onload: response => {
-
 			if (response.readyState == 4) {
 				var json_data = JSON.parse(response.responseText);
 				if (json_data.result == 0) {
@@ -303,6 +302,7 @@ function renamefile(f, cb) {
 }
 
 function getfilelink(f, cb) {
+	console.log('getfilelink url:', f.url, f.filename);
 	var data = {
 		fileid: f.fileid,
 		hashCache: f.hash,
@@ -310,13 +310,11 @@ function getfilelink(f, cb) {
 		auth: auth
 	};
 	data = object2form(data);
-
 	GM_xmlhttpRequest({
 		method: 'GET',
 		url: 'https://api.pcloud.com/getfilelink?' + data,
 		headers: pcloud_get_headers,
 		onload: response => {
-
 			if (response.readyState == 4) {
 				var json_data = JSON.parse(response.responseText);
 				if (json_data.result == 0) {
@@ -349,6 +347,7 @@ function remoteupload(url, filename) {
 }
 
 function storeLocal() {
+	console.log('storeLocal');
 	if (auth != '') {
 		let t = {
 			timestamp: new Date().getTime(),
@@ -363,15 +362,16 @@ function storeLocal() {
 }
 
 function readLocal() {
+	console.log('readLocal');
 	let st = localStorage.getItem('pcloud');
 	if (st != null)
 		st = JSON.parse(st);
 	if (st != null) {
 		if (new Date().getTime() - st.timestamp < 1000 * 60 * 60) {
-			auth = st.auth == "" ? auth : st.auth;
+			auth = st.auth;
 			today = st.today;
-			rootmetadata = st.rootmetadata == null ? rootmetadata : st.rootmetadata;
-			folderid = st.folderid == 0 ? folderid : st.folderid;
+			rootmetadata = st.rootmetadata;
+			folderid = st.folderid;
 			files = st.files;
 			for (var f in files) {
 				filesMap[files[f].url] = files[f];
