@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pcloud remote
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  pcloud remote upload files!
 // @author       You
 // @include      http://localhost/remote.html
@@ -264,6 +264,7 @@ function uploadprogress(f, cb) {
 							filesMap[url].filename = json_data.files[i].metadata.name;
 							filesMap[url].downloaded = json_data.files[i].downloaded;
 							filesMap[url].size = json_data.files[i].size;
+							storeLocal();
 						} else if (filesMap[url].fileid == 0) {
 							filesMap[url].downloaded = json_data.files[i].downloaded;
 							filesMap[url].size = json_data.files[i].size;
