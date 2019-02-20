@@ -31,15 +31,17 @@
 				<v-text-field v-model="filename" label="文件名" data-vv-name="filename"></v-text-field>
 				<v-btn @click="submit" color="success">submit</v-btn>
 				<v-btn @click="clear" color="error">clear</v-btn>
-			</v-form>
+			</v-form>			
 			<v-tabs color="cyan" dark slider-color="yellow">
-				<v-tab ripple>远程目录</v-tab>
 				<v-tab ripple>上传列表</v-tab>
-				<v-tab-item>
-					<file-list :items="filelist" @file-getlink="getlink" @file-delete="deletefile"></file-list>
-				</v-tab-item>
+				<v-tab ripple>远程目录</v-tab>
+				<v-tab ripple>账户信息</v-tab>
 				<v-tab-item>
 					<upload-list :items="filelist" @file-getlink="getlink" @file-delete="deletefilelink"></upload-list>
+				</v-tab-item>
+				<v-tab-item>
+				</v-tab-item>
+				<v-tab-item>
 				</v-tab-item>
 			</v-tabs>
 		</div>
@@ -67,7 +69,7 @@
 				filelist: null,
 				timer: 0
 			}),
-			beforeCreate: function() {
+			beforeMount: function() {
 				let oThis = this;
 
 				function _tf() {
@@ -165,6 +167,11 @@
 		Vue.component('upload-list', {
 			props: ['items'],
 			template: document.querySelector('#upload-list'),
+			watch: {
+				items: function(oldvalue, newvalue) {
+					debugger;
+				}
+			},
 			methods: {
 				getfilelink(fdata) {
 					this.$emit('file-getlink', fdata);
@@ -216,7 +223,7 @@
 	</template>
 
 	<script>
-		new Vue({
+		var app = new Vue({
 			el: '#app'
 		});
 
